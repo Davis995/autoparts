@@ -1,14 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-// Default keys (fallbacks if env variables are missing)
-const DEFAULT_URL = 'https://zibnneekiixqnhynzqli.supabase.co'
-const DEFAULT_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppYm5uZWVraWl4cW5oeW56cWxpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Njg0OTU2MiwiZXhwIjoyMDgyNDI1NTYyfQ.aFp1kHba7b1H4GHiiJ_R3-lH5KlyDRcLk7cuD8Eb9G4'
+// All keys now come from environment variables.
+// - NEXT_PUBLIC_SUPABASE_URL:      public URL
+// - NEXT_PUBLIC_SUPABASE_ANON_KEY: public anon key (safe for browser)
+// - SUPABASE_SERVICE_ROLE_KEY:     secret service role key (server only)
+
+const PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 function getClientKeys() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? DEFAULT_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? DEFAULT_SERVICE_KEY
-  return { url, anon }
+  if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error('Supabase env vars missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
+  return { url: PUBLIC_SUPABASE_URL, anon: PUBLIC_SUPABASE_ANON_KEY }
 }
 
 // Singleton instance for client-side (browser)
@@ -27,8 +33,11 @@ export const supabaseClient = createClientComponentClient()
 
 // For server-side (API routes): falls back to anon key if SR key missing
 export const createServerComponentClient = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? DEFAULT_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? DEFAULT_SERVICE_KEY)
+  if (!PUBLIC_SUPABASE_URL || !(SERVICE_ROLE_KEY || PUBLIC_SUPABASE_ANON_KEY)) {
+    throw new Error('Supabase env vars missing: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
+  const url = PUBLIC_SUPABASE_URL
+  const serviceKey = SERVICE_ROLE_KEY ?? PUBLIC_SUPABASE_ANON_KEY!
   return createClient<Database>(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
   })
@@ -36,6 +45,6 @@ export const createServerComponentClient = () => {
 
 // Compatibility export using fallbacks
 export const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? DEFAULT_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? DEFAULT_SERVICE_KEY
+  PUBLIC_SUPABASE_URL!,
+  PUBLIC_SUPABASE_ANON_KEY!
 )
