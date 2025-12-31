@@ -35,11 +35,19 @@ export async function POST(request: Request) {
     }
 
     // 2. Check if user is admin
+    type AdminProfile = {
+      isAdmin: boolean
+      role: 'USER' | 'ADMIN'
+      email: string
+      firstName: string | null
+      lastName: string | null
+    }
+
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('isAdmin, role, email, firstName, lastName')
       .eq('id', user.id)
-      .single()
+      .single<AdminProfile>()
 
     if (profileError || !profile?.isAdmin) {
       // Sign out the user since they're not admin
@@ -53,8 +61,8 @@ export async function POST(request: Request) {
 
     // 3. Create profile if it doesn't exist (for existing users)
     if (!profile) {
-      const { error: createProfileError } = await supabase
-        .from('user_profiles')
+      const { error: createProfileError } = await (supabase
+        .from('user_profiles') as any)
         .insert({
           id: user.id,
           email: user.email!,
@@ -63,7 +71,7 @@ export async function POST(request: Request) {
           avatarUrl: user.user_metadata?.avatar_url || null,
           isAdmin: false, // Will be updated separately for actual admins
           emailVerified: user.email_confirmed_at ? true : false,
-          role: 'CUSTOMER'
+          role: 'USER'
         })
 
       if (createProfileError) {

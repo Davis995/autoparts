@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const productMap = new Map<string, any>();
-    for (const p of products || []) {
+    for (const p of (products || []) as any[]) {
       productMap.set(p.id as string, p);
     }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORD-${Date.now()}`;
 
     // Create order row
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await (supabase as any)
       .from('orders')
       .insert({
         order_number: orderNumber,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       updated_at: now,
     }));
 
-    const { error: orderItemsError } = await supabase
+    const { error: orderItemsError } = await (supabase as any)
       .from('order_items')
       .insert(orderItemsPayload);
 
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     for (const item of items as any[]) {
       const product = productMap.get(item.productId) as any;
       const newStock = product.stock - item.quantity;
-      const { error: stockError } = await supabase
+      const { error: stockError } = await (supabase as any)
         .from('products')
         .update({ stock: newStock })
         .eq('id', product.id);

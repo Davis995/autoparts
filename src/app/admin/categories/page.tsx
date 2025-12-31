@@ -302,7 +302,11 @@ export default function AdminCategories() {
                     <IconPackage size={14} style={{ color: 'var(--mantine-color-dimmed)' }} />
                     <Text size="xs" c="dimmed">{category.productCount} products</Text>
                   </Group>
-                  <Text size="xs" c="dimmed">{category.createdAt}</Text>
+                  <Text size="xs" c="dimmed">
+                    {category.createdAt
+                      ? new Date(category.createdAt as any).toLocaleDateString()
+                      : ''}
+                  </Text>
                 </Group>
 
                 <Group gap="xs">

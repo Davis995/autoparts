@@ -25,6 +25,7 @@ interface Product {
   isActive: boolean
   isFeatured: boolean
   isBestSelling: boolean
+  isTopSelling?: boolean
   newArrival: boolean
   onSale: boolean
   rating: number
@@ -46,8 +47,22 @@ interface Category {
   updatedAt: Date
 }
 
-type ProductInsert = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
-type ProductUpdate = Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>
+// Payloads used by the admin UI for create/update.
+// These represent the fields we actually send to the API,
+// which may be a subset of the full Product shape.
+export type ProductInsert = {
+  name: string
+  description: string | null
+  price: number
+  stock: number
+  categoryId: string
+  images: string[]
+  isActive: boolean
+  isBestSelling: boolean
+  isTopSelling: boolean
+}
+
+export type ProductUpdate = Partial<ProductInsert>
 
 export interface ProductWithCategory extends Product {
   category: Category | null

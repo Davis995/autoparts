@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { id } = await params
     const supabase = createServerComponentClient()
-    const { data: category, error } = await supabase
+    const { data: category, error } = await (supabase as any)
       .from('categories')
       .select('*')
       .eq('id', id)
@@ -69,7 +69,7 @@ export async function PUT(
     if (body.sortOrder !== undefined)
       transformedData.sort_order = body.sortOrder
 
-    const { data: category, error } = await supabase
+    const { data: category, error } = await (supabase as any)
       .from('categories')
       .update(transformedData)
       .eq('id', id)

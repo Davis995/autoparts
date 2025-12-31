@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // First get or create user's cart
-    let { data: cart, error: cartError } = await supabase
+    let { data: cart, error: cartError } = await (supabase as any)
       .from('cart')
       .select('id')
       .eq('userId', user.id)
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (cartError && cartError.code === 'PGRST116') {
       // Cart doesn't exist, create one
-      const { data: newCart, error: createError } = await supabase
+      const { data: newCart, error: createError } = await (supabase as any)
         .from('cart')
         .insert({ userId: user.id })
         .select()
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
-    const { data: cartItems, error } = await supabase
+    const { data: cartItems, error } = await (supabase as any)
       .from('cart_items')
       .select(`
         *,
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if product exists and has stock
-    const { data: product, error: productError } = await supabase
+    const { data: product, error: productError } = await (supabase as any)
       .from('products')
       .select('*')
       .eq('id', productId)
@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    if (product.stock < quantity) {
+    if ((product as any).stock < quantity) {
       return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
     }
 
     // Get or create user's cart
-    let { data: cart, error: cartError } = await supabase
+    let { data: cart, error: cartError } = await (supabase as any)
       .from('cart')
       .select('id')
       .eq('userId', user.id)
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     if (cartError && cartError.code === 'PGRST116') {
       // Cart doesn't exist, create one
-      const { data: newCart, error: createError } = await supabase
+      const { data: newCart, error: createError } = await (supabase as any)
         .from('cart')
         .insert({ userId: user.id })
         .select()
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
-    const { data: existingItem } = await supabase
+    const { data: existingItem } = await (supabase as any)
       .from('cart_items')
       .select('*')
       .eq('cartId', cart.id)
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
       }
 
-      const { data: updatedItem, error: updateError } = await supabase
+      const { data: updatedItem, error: updateError } = await (supabase as any)
         .from('cart_items')
         .update({ quantity: newQuantity })
         .eq('id', existingItem.id)
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
       }
 
-      const { data: newItem, error: insertError } = await supabase
+      const { data: newItem, error: insertError } = await (supabase as any)
         .from('cart_items')
         .insert({
           cartId: cart.id,

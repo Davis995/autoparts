@@ -40,7 +40,7 @@ export async function PUT(
     const body = await request.json()
     const supabase = createServerComponentClient()
 
-    const { data: promotion, error } = await supabase
+    const { data: promotion, error } = await (supabase as any)
       .from('promotions')
       .update(body)
       .eq('id', id)

@@ -23,17 +23,17 @@ export async function POST(
     }
 
     // Optionally verify product exists and is active
-    const { data: product, error: productError } = await supabase
+    const { data: product, error: productError } = await (supabase as any)
       .from('products')
       .select('id, isActive')
       .eq('id', id)
       .single()
 
-    if (productError || !product || !product.isActive) {
+    if (productError || !product || !(product as any).isActive) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('favorites')
       .upsert(
         { userId: user.id, productId: id },

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       sort_order: body.sortOrder || 0
     }
     
-    const { data: category, error } = await supabase
+    const { data: category, error } = await (supabase as any)
       .from('categories')
       .insert(transformedData)
       .select()

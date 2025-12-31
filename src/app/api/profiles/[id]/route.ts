@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await (supabase as any)
       .from('user_profiles')
       .select('*')
       .eq('id', id)
@@ -38,7 +38,7 @@ export async function PUT(
     const body = await request.json()
     const { id } = await context.params
     
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await (supabase as any)
       .from('user_profiles')
       .update(body)
       .eq('id', id)

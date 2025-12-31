@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     // 2. Check if user profile exists, create if not
     console.log('Checking profile for user:', user.id)
-    const { data: existingProfile, error: profileCheckError } = await supabase
+    const { data: existingProfile, error: profileCheckError } = await (supabase as any)
       .from('user_profiles')
       .select('id')
       .eq('id', user.id)
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     if (!existingProfile) {
       console.log('Creating new profile for user:', user.id)
       // Create profile for existing user who doesn't have one
-      const { error: profileError } = await supabase
+      const { error: profileError } = await (supabase as any)
         .from('user_profiles')
         .insert({
           id: user.id,

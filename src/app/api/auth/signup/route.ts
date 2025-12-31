@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Create user profile
-    const { error: profileError } = await supabase
+    const { error: profileError } = await (supabase as any)
       .from('user_profiles')
       .insert({
         id: user.id,

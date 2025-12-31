@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     // Get cart item with product to check stock and verify ownership
-    const { data: cartItem, error: fetchError } = await supabase
+    const { data: cartItem, error: fetchError } = await (supabase as any)
       .from('cart_items')
       .select(`
         *,
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     // Update quantity
-    const { data: updatedItem, error: updateError } = await supabase
+    const { data: updatedItem, error: updateError } = await (supabase as any)
       .from('cart_items')
       .update({ quantity })
       .eq('id', cartItemId)
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     const cartItemId = id;
 
     // Verify ownership before deletion
-    const { data: cartItem, error: fetchError } = await supabase
+    const { data: cartItem, error: fetchError } = await (supabase as any)
       .from('cart_items')
       .select(`
         *,
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
     }
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await (supabase as any)
       .from('cart_items')
       .delete()
       .eq('id', cartItemId);

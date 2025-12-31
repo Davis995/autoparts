@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
-export default function AdminLoginPage() {
+function AdminLoginPageInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -220,5 +220,27 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <Shield className="w-8 h-8 text-blue-600" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Loading Admin Login...
+            </h1>
+            <p className="text-gray-600">Please wait while we prepare the login page.</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AdminLoginPageInner />
+    </Suspense>
   );
 }

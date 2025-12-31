@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       address: body.address ?? body.locationName,
     }
 
-    const { data: order, error } = await supabase
+    const { data: order, error } = await (supabase as any)
       .from('orders')
       .insert(transformed)
       .select('*, user:users(*), items:order_items(*, product:products(*))')

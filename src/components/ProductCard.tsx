@@ -136,12 +136,13 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
       return;
     }
 
-    if (product.stock === 0) {
+    // If stock information is missing, allow add-to-cart; otherwise enforce stock rules
+    if ((product as any).stock === 0) {
       return;
     }
 
     try {
-      await addToCart(product, 1);
+      await addToCart(product as any, 1);
       onAddToCart?.(product.id);
     } catch (error) {
       console.error('Failed to add to cart:', error);
@@ -183,7 +184,7 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
         </button>
       </div>
       <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        <div className="text-xs sm:text-sm text-gray-500 mb-1">{product.category.name}</div>
+        <div className="text-xs sm:text-sm text-gray-500 mb-1">{product.category?.name}</div>
         <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-2 line-clamp-2 flex-grow">{product.name}</h3>
         <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between mb-3 mt-auto">
@@ -193,16 +194,16 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
           </div>
           <button
             onClick={handleAddToCart}
-            disabled={product.stock === 0 || cartLoading}
+            disabled={(product as any).stock === 0 || cartLoading}
             className="bg-blue-600 text-white p-2 sm:p-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
-        {product.stock < 10 && product.stock > 0 && (
-          <div className="text-xs sm:text-sm text-orange-600">Only {product.stock} left</div>
+        {(product as any).stock < 10 && (product as any).stock > 0 && (
+          <div className="text-xs sm:text-sm text-orange-600">Only {(product as any).stock} left</div>
         )}
-        {product.stock === 0 && (
+        {(product as any).stock === 0 && (
           <div className="text-xs sm:text-sm text-red-600">Out of stock</div>
         )}
       </div>

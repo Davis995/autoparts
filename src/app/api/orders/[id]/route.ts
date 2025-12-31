@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { id } = await params
     const supabase = createServerComponentClient()
-    const { data: order, error } = await supabase
+    const { data: order, error } = await (supabase as any)
       .from('orders')
       .select('*, user:users(*), items:order_items(*, product:products(*))')
       .eq('id', id)
@@ -96,7 +96,7 @@ export async function PUT(
     }
     
     const supabase = createServerComponentClient()
-    const { data: order, error } = await supabase
+    const { data: order, error } = await (supabase as any)
       .from('orders')
       .update(transformedData)
       .eq('id', id)

@@ -108,6 +108,13 @@ export default function AdminOrders() {
     { value: 'DELIVERED', label: 'Delivered' },
   ];
 
+  const getCustomerName = (order: OrderWithDetails) => {
+    const user = order.user;
+    if (!user) return '';
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return fullName || user.email || '';
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING': return 'yellow';
@@ -139,7 +146,7 @@ export default function AdminOrders() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      const customerName = order.user?.name || '';
+      const customerName = getCustomerName(order);
       const customerEmail = order.user?.email || '';
       const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -313,7 +320,7 @@ export default function AdminOrders() {
                     </Table.Td>
                     <Table.Td>
                       <Box>
-                        <Text fw={500} size="sm">{order.user?.name || 'N/A'}</Text>
+                        <Text fw={500} size="sm">{getCustomerName(order) || 'N/A'}</Text>
                         <Text size="xs" c="dimmed">{order.user?.email || 'N/A'}</Text>
                       </Box>
                     </Table.Td>
@@ -424,7 +431,7 @@ export default function AdminOrders() {
                 <Grid>
                   <Grid.Col span={6}>
                     <Text size="sm" c="dimmed">Customer Name</Text>
-                    <Text fw={500}>{selectedOrder.user?.name || 'N/A'}</Text>
+                    <Text fw={500}>{getCustomerName(selectedOrder) || 'N/A'}</Text>
                   </Grid.Col>
                   <Grid.Col span={6}>
                     <Text size="sm" c="dimmed">Order ID</Text>

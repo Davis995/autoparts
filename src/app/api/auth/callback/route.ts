@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     if (!error && user) {
       // Check if user profile exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile } = await (supabase as any)
         .from('user_profiles')
         .select('id')
         .eq('id', user.id)
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
       // Create profile if it doesn't exist
       if (!existingProfile) {
-        const { error: profileError } = await supabase
+        const { error: profileError } = await (supabase as any)
           .from('user_profiles')
           .insert({
             id: user.id,
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         }
       } else {
         // Update existing profile with latest auth metadata
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('user_profiles')
           .update({
             emailVerified: user.email_confirmed_at ? true : false,

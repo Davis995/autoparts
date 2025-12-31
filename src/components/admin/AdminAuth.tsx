@@ -30,7 +30,7 @@ export default function AdminAuth({ children }: AdminAuthProps) {
         }
 
         // Check if user is admin
-        const { data: profile, error } = await supabase
+        const { data: profile, error } = await (supabase as any)
           .from('user_profiles')
           .select('isAdmin, role, email, firstName, lastName')
           .eq('id', session.user.id)
