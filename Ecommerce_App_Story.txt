@@ -1,0 +1,32 @@
+
+Full E-commerce App Story: Next.js + Supabase + Pesapal + Phone Number Ordering
+
+The story starts when a customer in Uganda opens the online shop on their phone or laptop. The frontend is built using Next.js, which controls all pages, interactions, and navigation. When the homepage loads, the product list is fetched directly from Supabase. Supabase acts as the database, returning product details: name, price, description, image, category. This makes product display instant and simple.
+
+However, as soon as the customer interacts with the store—adding items to a cart, entering their phone number, or placing an order—Next.js API routes take over. For example:
+
+- /api/cart/add -> Adds a product to the customer’s cart in Supabase.
+- /api/cart/get -> Retrieves the cart for the logged-in user.
+- /api/order/create -> Creates a new order, including the customer’s phone number.
+
+When the customer adds their phone number at checkout, Next.js API ensures the phone is validated and stored in the orders table in Supabase along with the user ID and order details. The phone number is essential for delivery and Pesapal’s mobile money payment verification.
+
+At checkout, the Next.js API route /api/checkout prepares the order for Pesapal payment. It sends the order amount, currency (UGX), customer phone number, and order ID to Pesapal’s API. The customer is then redirected to Pesapal’s payment page, where they can pay using MTN Mobile Money, Airtel Money, or card. After payment, Pesapal sends a server-to-server callback to another Next.js API route (/api/pesapal/callback) that verifies the payment and updates the order status in Supabase to 'paid'.
+
+Meanwhile, the admin accesses a dashboard built with Next.js. Admin API routes handle all updates:
+
+- /api/admin/products/add -> Add new products (images stored in Supabase Storage, metadata in Supabase database).
+- /api/admin/orders/get -> Fetch all orders including phone numbers and payment status.
+- /api/admin/orders/update-status -> Update delivery status (shipped, delivered).
+
+Because products are fetched directly from Supabase, the client sees the latest catalog immediately. All user-specific data, carts, orders, and phone numbers go through Next.js API routes for security. This ensures that users cannot manipulate order totals or access other users’ data, and phone numbers are only exposed in the backend for delivery.
+
+In summary:
+
+- Direct Supabase fetch: Products
+- Next.js API routes: Cart, orders, phone number, checkout, Pesapal integration
+- Phone numbers: Collected at checkout for mobile money payment and delivery
+- Security: Row Level Security (Supabase) + Next.js API server logic
+- Payments: Pesapal handles Uganda Mobile Money + card
+
+This setup creates a secure, scalable, Uganda-ready e-commerce app where products are always up-to-date, orders are safe, and payment flows are localized.

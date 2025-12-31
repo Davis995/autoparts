@@ -1,0 +1,54 @@
+System Workflow Summary
+
+1. App Structure (Next.js App Router)
+- Pages: Home (src/app/page.tsx), Products (src/app/products/page.tsx), Cart (src/app/cart/page.tsx), Checkout (src/app/checkout/page.tsx), Saved (src/app/saved/page.tsx), Login (src/app/login/page.tsx).
+- Admin: src/app/admin/* (dashboard and feature pages: categories, products, promotions, orders, settings).
+- APIs: src/app/api/* (REST-like routes for auth, admin auth, categories, products, orders, profiles, promotions, cart).
+- Shared libs: src/lib/* (supabase client, currency helpers, storage, react-query provider, auth hook).
+- State/contexts: src/contexts/* (AuthContext, SessionContext).
+- Components: src/components/* and src/components/admin/* (UI and admin scaffolding, guards).
+
+2. Authentication & Profiles (Supabase)
+- Client setup: supabase client created in src/lib/supabase.ts with fallbacks for env vars; exported as supabaseClient and supabase.
+- User session: src/lib/auth.ts exposes useAuth() hook reading supabaseClient.auth state, providing user, session, and admin role based on user_metadata.
+- Auth context: src/contexts/AuthContext.tsx initializes from supabase, listens to auth changes, and upserts/fetches profile via /api/profiles routes.
+- Profile persistence: /api/profiles and /api/profiles/[id] (GET/PUT/POST) interact with 'user_profiles' table in Supabase.
+
+3. Route Protection
+- Client-side guard: src/components/ProtectedRoute.tsx redirects unauthenticated users to /login; enforces admin-only access when requireAdmin=true.
+- Admin guard: src/components/admin/AdminAuth.tsx checks session via supabaseClient and verifies user_profiles.isAdmin; redirects to /admin/login when unauthorized.
+- Middleware: src/middleware.ts runs for '/admin/*' and '/api/*'.
+  - Admin pages: verifies session and isAdmin via createServerComponentClient(); redirects to admin login if not authorized.
+  - API endpoints: expects 'Authorization: Bearer <token>' header; validates user, checks user_profiles.isAdmin, and blocks non-admin requests.
+
+4. Data Access Layers
+- Client data hooks: src/hooks/* (e.g., usePromotions.ts) use fetch() against /api/* with React Query for caching and mutation.
+- Server API routes: src/app/api/* use the server-side supabase client (supabase) to perform queries (select/insert/update/delete) against Supabase tables.
+- Example: products API (src/app/api/products/route.ts)
+  - GET: selects active products, joins categories, sorts by createdAt.
+  - POST: inserts product, returns inserted row with category relation.
+
+5. Admin Feature Workflows
+- Promotions: Admin UI (src/app/admin/promotions/page.tsx) lists, filters, creates, updates, and deletes promotions via hooks (src/hooks/usePromotions.ts) calling /api/promotions and /api/promotions/[id].
+- Categories, Products, Orders: Similar pattern—admin pages call hooks which call REST endpoints that use Supabase.
+- Settings: Admin settings pages for configuration; protected by admin guard.
+
+6. UI State & Providers
+- React Query provider: src/lib/react-query.tsx supplies QueryClient; Devtools available.
+- Global styles and layout: src/app/layout.tsx and src/app/globals.css set baseline UI.
+
+7. Public User Flow
+- Browse products, view product cards (src/components/ProductCard.tsx), add to cart via hooks (src/hooks/useCart.ts), proceed to checkout.
+- Login/Signup flows use Supabase OAuth/password; after login, profile is fetched/upserted and stored in AuthContext.
+
+8. Admin Flow
+- Visit /admin; middleware + AdminAuth enforce auth and admin role.
+- Manage resources (promotions, products, categories, orders) via admin pages; operations persist to Supabase through API routes.
+
+9. Error Handling
+- Client hooks catch and surface errors via notifications (Mantine) and React Query mutation errors.
+- API routes return JSON errors with status codes; middleware enforces auth errors for protected resources.
+
+10. Notes on Prisma Removal
+- Prisma client and config neutralized; all data flows use Supabase now.
+- Types: src/types/database.ts defines minimal Database typing used by supabase client and components.
