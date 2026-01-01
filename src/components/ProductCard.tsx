@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/hooks/useCart';
@@ -88,7 +88,8 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
     };
   }, [product.id, isAuthenticated]);
 
-  const toggleFavorite = async () => {
+  const toggleFavorite = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     if (!isAuthenticated) {
       window.location.href = '/login';
       return;
@@ -130,9 +131,11 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
     }
   };
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      router.push('/login');
       return;
     }
 
