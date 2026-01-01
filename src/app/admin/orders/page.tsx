@@ -21,6 +21,7 @@ import {
   Textarea,
   Loader,
   Alert,
+  Pagination,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -56,6 +57,8 @@ export default function AdminOrders() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const hasInitializedRef = useRef(false);
   const previousOrderCountRef = useRef(0);
   
@@ -70,32 +73,38 @@ export default function AdminOrders() {
     }
   }, [selectedOrder, editModalOpened]);
 
-  // Notify admin when new orders arrive
+  // Notify admin when new COD orders arrive
   useEffect(() => {
     if (!orders) return;
 
+    // Track only CASH_ON_DELIVERY orders for the "new orders" notification
+    const codOrders = orders.filter((o) => o.status === 'CASH_ON_DELIVERY');
+
     if (!hasInitializedRef.current) {
-      previousOrderCountRef.current = orders.length;
+      previousOrderCountRef.current = codOrders.length;
       hasInitializedRef.current = true;
       return;
     }
 
-    if (orders.length > previousOrderCountRef.current) {
-      const newOrdersCount = orders.length - previousOrderCountRef.current;
-      previousOrderCountRef.current = orders.length;
+    if (codOrders.length > previousOrderCountRef.current) {
+      const newlyArrived = codOrders.length - previousOrderCountRef.current;
+      previousOrderCountRef.current = codOrders.length;
 
       notifications.show({
         title: 'New order received',
-        message: newOrdersCount === 1 ? '1 new order has just been placed.' : `${newOrdersCount} new orders have just been placed.`,
+        message:
+          newlyArrived === 1
+            ? '1 new order has just been placed.'
+            : `${newlyArrived} new orders have just been placed.`,
         color: 'green',
         icon: <IconPackage size={16} />,
       });
 
-      // Also show inline alert at top of page
-      setNewOrdersCount((count) => count + newOrdersCount);
-    } else if (orders.length < previousOrderCountRef.current) {
-      // Keep count in sync if orders are removed/archived
-      previousOrderCountRef.current = orders.length;
+      // Also show inline alert at top of page, counting only COD orders
+      setNewOrdersCount((count) => count + newlyArrived);
+    } else if (codOrders.length < previousOrderCountRef.current) {
+      // Keep count in sync if COD orders are removed/updated
+      previousOrderCountRef.current = codOrders.length;
     }
   }, [orders]);
 
@@ -155,6 +164,18 @@ export default function AdminOrders() {
       return matchesSearch && matchesStatus;
     });
   }, [orders, searchTerm, statusFilter]);
+
+  // Reset to first page when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+
+  const paginatedOrders = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, page]);
 
   const orderStats = useMemo(() => {
     return {
@@ -281,6 +302,16 @@ export default function AdminOrders() {
 
           {/* Orders Table */}
           <Card withBorder p="lg">
+            <Group justify="space-between" mb="md">
+              <Text size="sm" c="dimmed">
+                Showing {filteredOrders.length === 0 ? 0 : (page - 1) * pageSize + 1}
+                {' - '}
+                {Math.min(page * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
+              </Text>
+              {totalPages > 1 && (
+                <Pagination total={totalPages} value={page} onChange={setPage} size="sm" />
+              )}
+            </Group>
             <Table striped highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
@@ -313,7 +344,7 @@ export default function AdminOrders() {
                     </Table.Td>
                   </Table.Tr>
                 ) : (
-                  filteredOrders.map((order) => (
+                  paginatedOrders.map((order) => (
                   <Table.Tr key={order.id}>
                     <Table.Td>
                       <Text fw={500} size="sm">{order.id}</Text>

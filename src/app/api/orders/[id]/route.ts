@@ -10,7 +10,7 @@ export async function GET(
     const supabase = createServerComponentClient()
     const { data: order, error } = await (supabase as any)
       .from('orders')
-      .select('*, user:users(*), items:order_items(*, product:products(*))')
+      .select('*, items:order_items(*, product:products(*))')
       .eq('id', id)
       .single()
     
@@ -41,7 +41,7 @@ export async function GET(
       address: (order as any).address,
       createdAt: (order as any).created_at,
       updatedAt: (order as any).updated_at,
-      user: (order as any).user,
+      user: null,
       orderItems: ((order as any).items || []).map((item: any) => ({
         id: item.id,
         orderId: item.order_id,
@@ -100,7 +100,7 @@ export async function PUT(
       .from('orders')
       .update(transformedData)
       .eq('id', id)
-      .select('*, user:users(*), items:order_items(*, product:products(*))')
+      .select('*, items:order_items(*, product:products(*))')
       .single()
 		
     if (error || !order) {
@@ -130,7 +130,7 @@ export async function PUT(
       address: (order as any).address,
       createdAt: (order as any).created_at,
       updatedAt: (order as any).updated_at,
-      user: (order as any).user,
+      user: null,
       orderItems: ((order as any).items || []).map((item: any) => ({
         id: item.id,
         orderId: item.order_id,

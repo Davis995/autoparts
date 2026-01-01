@@ -7,11 +7,13 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { formatPrice } from '@/lib/currency';
 import { useOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders');
   const { data: orders = [], isLoading } = useOrders({ scope: 'me', refetchIntervalMs: 10000 });
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
   const displayName =
     (user?.user_metadata as any)?.first_name && (user?.user_metadata as any)?.last_name
@@ -80,7 +82,17 @@ export default function DashboardPage() {
                   <User className="h-5 w-5" />
                   <span className="text-sm sm:text-base">Profile</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-left hover:bg-gray-50 text-red-600">
+                <button
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      router.push('/login');
+                    } catch (err) {
+                      console.error('Logout failed:', err);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-left hover:bg-gray-50 text-red-600"
+                >
                   <LogOut className="h-5 w-5" />
                   <span className="text-sm sm:text-base">Log Out</span>
                 </button>
@@ -181,7 +193,12 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-6">
-                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                  <button
+                    type="button"
+                    disabled
+                    className="bg-gray-300 text-gray-600 px-6 py-2 rounded-lg font-medium cursor-not-allowed"
+                    title="Profile editing is not yet wired to backend"
+                  >
                     Save Changes
                   </button>
                 </div>

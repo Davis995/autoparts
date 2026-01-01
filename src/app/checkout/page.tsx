@@ -9,7 +9,7 @@ import { useCart } from '@/hooks/useCart';
 import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage() {
-  const { items, loading } = useCart();
+  const { items, loading, clearCart } = useCart();
   const router = useRouter();
 
   const [phone, setPhone] = useState('');
@@ -124,6 +124,8 @@ export default function CheckoutPage() {
                       return;
                     }
 
+                    // Order placed successfully; clear the local cart
+                    clearCart();
                     router.push('/dashboard');
                   } catch (err) {
                     setError('Unexpected error placing order');

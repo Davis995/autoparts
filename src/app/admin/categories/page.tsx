@@ -19,6 +19,7 @@ import {
   SimpleGrid,
   Loader,
   Alert,
+  Pagination,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -43,6 +44,8 @@ export default function AdminCategories() {
   const [modalOpened, setModalOpened] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithProductCount | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -69,6 +72,23 @@ export default function AdminCategories() {
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const totalCategories = filteredCategories.length;
+  const totalPages = totalCategories === 0 ? 1 : Math.ceil(totalCategories / pageSize);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  // Ensure current page is within bounds when category count changes
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const paginatedCategories = filteredCategories.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
   
   const getStatusColor = (status: boolean) => status ? 'green' : 'gray';
   const getStatusText = (status: boolean) => status ? 'Active' : 'Inactive';
@@ -271,8 +291,9 @@ export default function AdminCategories() {
           </Group>
         </Card>
       ) : (
+        <>
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-          {filteredCategories.map((category) => (
+          {paginatedCategories.map((category) => (
             <Card withBorder key={category.id} shadow="sm">
               <Card.Section h={120} bg="gradient-to-br from-blue-5 to-purple-6">
                 <Box h="100%" pos="relative">
@@ -336,6 +357,20 @@ export default function AdminCategories() {
             </Card>
           ))}
         </SimpleGrid>
+
+        {!isLoading && filteredCategories.length > 0 && (
+          <Group justify="space-between" mt="md">
+            <Text size="sm" c="dimmed">
+              {(() => {
+                const start = (page - 1) * pageSize + 1;
+                const end = Math.min(page * pageSize, totalCategories);
+                return `Showing ${start} - ${end} of ${totalCategories} categories`;
+              })()}
+            </Text>
+            <Pagination value={page} onChange={setPage} total={totalPages} size="sm" />
+          </Group>
+        )}
+        </>
       )}
 
       {/* Add/Edit Category Modal */}

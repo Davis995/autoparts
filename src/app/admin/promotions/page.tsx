@@ -21,6 +21,7 @@ import {
   NumberInput,
   Loader,
   Alert,
+  Pagination,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -54,6 +55,8 @@ export default function AdminPromotions() {
   const [modalOpened, setModalOpened] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -105,6 +108,26 @@ export default function AdminPromotions() {
       return matchesSearch;
     });
   }, [promotions, searchTerm]);
+
+  const totalPromotions = filteredPromotions.length;
+  const totalPages = totalPromotions === 0 ? 1 : Math.ceil(totalPromotions / pageSize);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  // Ensure current page is within bounds when promotion count changes
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const paginatedPromotions = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredPromotions.slice(start, start + pageSize);
+  }, [filteredPromotions, page, pageSize]);
 
   const handleSubmit = async () => {
     if (!formData.title) {
@@ -303,8 +326,9 @@ export default function AdminPromotions() {
               </Group>
             </Card>
           ) : (
+            <>
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-              {filteredPromotions.map((promo) => (
+              {paginatedPromotions.map((promo) => (
                 <Card withBorder key={promo.id} shadow="sm">
                   <Card.Section h={120} bg="gradient-to-br from-blue-5 to-purple-6">
                     <Box h="100%" pos="relative">
@@ -396,6 +420,20 @@ export default function AdminPromotions() {
                 </Card>
               ))}
             </SimpleGrid>
+
+            {!isLoading && filteredPromotions.length > 0 && (
+              <Group justify="space-between" mt="md">
+                <Text size="sm" c="dimmed">
+                  {(() => {
+                    const start = (page - 1) * pageSize + 1;
+                    const end = Math.min(page * pageSize, totalPromotions);
+                    return `Showing ${start} - ${end} of ${totalPromotions} promotions`;
+                  })()}
+                </Text>
+                <Pagination value={page} onChange={setPage} total={totalPages} size="sm" />
+              </Group>
+            )}
+            </>
           )}
 
           {/* Add/Edit Promotion Modal */}

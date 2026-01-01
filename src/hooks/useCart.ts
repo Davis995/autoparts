@@ -97,8 +97,9 @@ export function useCart() {
             .filter((i): i is CartItem => !!i)
         : [];
 
+      // Just sync in-memory state from localStorage; avoid re-writing and
+      // re-emitting the cart-updated event here to prevent event loops.
       updateDerivedValues(normalized);
-      persistCart(normalized);
     } catch {
       updateDerivedValues([]);
     } finally {
@@ -202,6 +203,13 @@ export function useCart() {
     }
   };
 
+  // Clear entire cart (used after successful checkout)
+  const clearCart = () => {
+    const empty: CartItem[] = [];
+    persistCart(empty);
+    updateDerivedValues(empty);
+  };
+
   // Clear error
   const clearError = () => {
     setCartState(prev => ({ ...prev, error: null }));
@@ -224,6 +232,7 @@ export function useCart() {
     addToCart,
     updateQuantity,
     removeFromCart,
-    clearError
+    clearError,
+    clearCart,
   };
 }

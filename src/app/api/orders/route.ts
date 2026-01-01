@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('orders')
-      .select('*, user:users(*), items:order_items(*, product:products(*))')
+      .select('*, items:order_items(*, product:products(*))')
       .order('created_at', { ascending: false })
 
     if (userOnly && userId) {
@@ -43,7 +43,34 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       )
     }
-    
+
+    // Fetch basic customer profiles so admin views can show names
+    const userIds = Array.from(
+      new Set(
+        (orders || [])
+          .map((o: any) => o.user_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      )
+    )
+
+    let profilesById = new Map<string, any>()
+    if (userIds.length > 0) {
+      const { data: profiles, error: profilesError } = await (supabase as any)
+        .from('user_profiles')
+        .select('*')
+        .in('id', userIds)
+
+      if (profilesError) {
+        console.error('Error fetching order user profiles:', profilesError)
+      } else {
+        for (const profile of profiles || []) {
+          if (profile && profile.id) {
+            profilesById.set(profile.id as string, profile)
+          }
+        }
+      }
+    }
+
     const ordersWithDetails = (orders || []).map((order: any) => ({
       id: order.id,
       orderNumber: order.order_number,
@@ -64,7 +91,7 @@ export async function GET(request: NextRequest) {
       address: order.address,
       createdAt: order.created_at,
       updatedAt: order.updated_at,
-      user: order.user,
+      user: order.user_id ? profilesById.get(order.user_id) ?? null : null,
       orderItems: (order.items || []).map((item: any) => ({
         id: item.id,
         orderId: item.order_id,

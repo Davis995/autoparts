@@ -23,6 +23,7 @@ import {
   Image,
   Loader,
   Alert,
+  Pagination,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -78,6 +79,9 @@ export default function AdminProducts() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+
   const [opened, setOpened] = useState(false);
   const [modalOpened, setModalOpened] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
@@ -167,6 +171,26 @@ export default function AdminProducts() {
     const matchesCategory = !selectedCategory || selectedCategory === 'all' || product.categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const totalProducts = filteredProducts.length;
+  const totalPages = totalProducts === 0 ? 1 : Math.ceil(totalProducts / pageSize);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedCategory]);
+
+  // Ensure current page is within bounds when product count changes
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (page - 1) * pageSize;
+    return filteredProducts.slice(startIndex, startIndex + pageSize);
+  }, [filteredProducts, page, pageSize]);
 
   const getStatusColor = (status: boolean) => status ? 'green' : 'red';
   const getStatusText = (status: boolean) => status ? 'Active' : 'Inactive';
@@ -435,7 +459,7 @@ export default function AdminProducts() {
                     </Table.Td>
                   </Table.Tr>
                 ) : (
-                  filteredProducts.map((product) => (
+                  paginatedProducts.map((product) => (
                   <Table.Tr key={product.id}>
                     <Table.Td>
                       <Group>
@@ -532,6 +556,19 @@ export default function AdminProducts() {
                 )}
               </Table.Tbody>
             </Table>
+
+            {!productsLoading && filteredProducts.length > 0 && (
+              <Group justify="space-between" mt="md">
+                <Text size="sm" c="dimmed">
+                  {(() => {
+                    const start = (page - 1) * pageSize + 1;
+                    const end = Math.min(page * pageSize, totalProducts);
+                    return `Showing ${start} - ${end} of ${totalProducts} products`;
+                  })()}
+                </Text>
+                <Pagination value={page} onChange={setPage} total={totalPages} size="sm" />
+              </Group>
+            )}
           </Card>
 
           {/* View Product Modal */}

@@ -129,43 +129,47 @@ create table if not exists public.promotions (
   "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
--- ============================================================================
--- CART & CART ITEMS
--- ============================================================================
+-- ==========================================================================
+-- CART & CART ITEMS (DEPRECATED)
+-- ==========================================================================
 
-create table if not exists public.cart (
-  id uuid primary key default gen_random_uuid(),
+-- Cart is now handled entirely on the client via localStorage.
+-- These tables are kept commented out so new environments don't create them,
+-- but existing databases may still have them; drop manually if desired.
 
-  "userId" uuid not null
-    references auth.users (id) on delete cascade,
+-- create table if not exists public.cart (
+--   id uuid primary key default gen_random_uuid(),
 
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now()),
+--   "userId" uuid not null
+--     references auth.users (id) on delete cascade,
 
-  constraint cart_user_unique unique ("userId")
-);
+--   created_at timestamptz not null default timezone('utc', now()),
+--   updated_at timestamptz not null default timezone('utc', now()),
 
-create table if not exists public.cart_items (
-  id uuid primary key default gen_random_uuid(),
+--   constraint cart_user_unique unique ("userId")
+-- );
 
-  "cartId" uuid not null
-    references public.cart (id) on delete cascade,
+-- create table if not exists public.cart_items (
+--   id uuid primary key default gen_random_uuid(),
 
-  "productId" uuid not null
-    references public.products (id) on delete restrict,
+--   "cartId" uuid not null
+--     references public.cart (id) on delete cascade,
 
-  quantity integer not null default 1,
-  price numeric(10,2) not null default 0,
+--   "productId" uuid not null
+--     references public.products (id) on delete restrict,
 
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
-);
+--   quantity integer not null default 1,
+--   price numeric(10,2) not null default 0,
 
-create index if not exists idx_cart_items_cartId
-  on public.cart_items ("cartId");
+--   created_at timestamptz not null default timezone('utc', now()),
+--   updated_at timestamptz not null default timezone('utc', now())
+-- );
 
-create index if not exists idx_cart_items_productId
-  on public.cart_items ("productId");
+-- create index if not exists idx_cart_items_cartId
+--   on public.cart_items ("cartId");
+
+-- create index if not exists idx_cart_items_productId
+--   on public.cart_items ("productId");
 
 -- ============================================================================
 -- ORDERS & ORDER ITEMS
