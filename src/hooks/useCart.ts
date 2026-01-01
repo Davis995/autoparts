@@ -55,18 +55,21 @@ export function useCart() {
     }));
   };
 
-  // Load cart from localStorage
+  // Load cart from localStorage only (no API calls for speed)
   const loadCart = () => {
     if (typeof window === 'undefined') return;
+    setCartState(prev => ({ ...prev, loading: true, error: null }));
+
     try {
       const raw = localStorage.getItem(storageKey);
       if (!raw) {
         updateDerivedValues([]);
+        setCartState(prev => ({ ...prev, loading: false }));
         return;
       }
+
       const parsed = JSON.parse(raw) as any[];
 
-      // Normalize and filter any malformed items that might have been saved earlier
       const normalized: CartItem[] = Array.isArray(parsed)
         ? parsed
             .map((item) => {
@@ -98,6 +101,8 @@ export function useCart() {
       persistCart(normalized);
     } catch {
       updateDerivedValues([]);
+    } finally {
+      setCartState(prev => ({ ...prev, loading: false }));
     }
   };
 
