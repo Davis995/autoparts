@@ -187,13 +187,15 @@ export function ProductCard({ product, onAddToCart, onToggleFavorite }: ProductC
         </button>
       </div>
       <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        <div className="text-xs sm:text-sm text-gray-500 mb-1">{product.category?.name}</div>
-        <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-2 line-clamp-2 flex-grow">{product.name}</h3>
-        <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+        <div className="text-xs sm:text-sm text-gray-700 mb-1">{product.category?.name}</div>
+        <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-2 line-clamp-2 flex-grow text-gray-900">
+          {product.name}
+        </h3>
+        <p className="text-xs sm:text-sm text-gray-700 mb-3 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between mb-3 mt-auto">
           <div>
             <span className="text-lg sm:text-xl font-bold text-blue-600">{formatPrice(product.price)}</span>
-            <div className="text-xs sm:text-sm text-gray-500 mb-1">{product.category?.name}</div>
+            <div className="text-xs sm:text-sm text-gray-700 mb-1">{product.category?.name}</div>
           </div>
           <button
             onClick={handleAddToCart}
