@@ -9,23 +9,28 @@ function AuthCallbackInner() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const code = searchParams.get("code");
-
-    if (!code) {
-      router.replace("/login");
-      return;
-    }
-
     const completeSignIn = async () => {
       try {
-        const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
-        if (error) {
-          console.error("Error exchanging code for session:", error);
-          router.replace("/login");
+        // First, handle the code flow if a `code` query param exists
+        const code = searchParams.get("code");
+
+        if (code) {
+          const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("Error exchanging code for session:", error);
+          }
+        }
+
+        // Whether or not a code was present, check if we now have a valid session.
+        const { data, error: sessionError } = await supabaseClient.auth.getSession();
+
+        if (!sessionError && data.session) {
+          router.replace("/dashboard");
           return;
         }
 
-        router.replace("/dashboard");
+        console.error("No session after OAuth callback:", sessionError);
+        router.replace("/login");
       } catch (err) {
         console.error("Unexpected error in auth callback:", err);
         router.replace("/login");
