@@ -100,8 +100,12 @@ export default function AdminLayout({
                 collapsed: { mobile: !opened, desktop: !opened },
               }}
             >
-              <AdminHeader toggle={() => setOpened((o) => !o)} opened={opened} user={user} />
-              <AdminSidebar opened={opened} onClose={() => setOpened(false)} user={user} />
+              <AppShell.Header>
+                <AdminHeader toggle={() => setOpened((o) => !o)} opened={opened} user={user} />
+              </AppShell.Header>
+              <AppShell.Navbar>
+                <AdminSidebar opened={opened} onClose={() => setOpened(false)} user={user} />
+              </AppShell.Navbar>
               <AppShell.Main>
                 <Container fluid p="md">
                   {children}

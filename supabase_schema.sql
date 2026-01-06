@@ -318,3 +318,13 @@ create index if not exists idx_favorites_userId
 
 create index if not exists idx_favorites_productId
   on public.favorites ("productId");
+
+-- ============================================================================
+-- SEED ADMIN USER
+-- ============================================================================
+
+-- Create admin user in auth.users
+-- Note: This uses Supabase's internal auth functions
+-- Password: admin123
+-- Email: admin@autohub.com
+

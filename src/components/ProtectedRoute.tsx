@@ -23,6 +23,12 @@ export function ProtectedRoute({
   useEffect(() => {
     if (loading) return;
 
+    // Prevent admin users from using customer-only protected routes
+    if (requireAuth && !requireAdmin && isAdmin) {
+      router.push('/admin');
+      return;
+    }
+
     if (requireAuth && !isAuthenticated) {
       router.push(redirectTo);
       return;
