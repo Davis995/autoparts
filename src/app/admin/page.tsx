@@ -36,7 +36,11 @@ import { useQuery } from '@tanstack/react-query';
 
 export default function AdminDashboard() {
   const { data: products = [], isLoading: productsLoading } = useProducts();
-  const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: orders = [], isLoading: ordersLoading } = useOrders({
+    // Keep dashboard order stats live using Supabase realtime
+    // @ts-expect-error - internal flag on useOrders
+    enableRealtime: true,
+  });
   
   const { data: customersCount = 0, isLoading: customersLoading } = useQuery({
     queryKey: ['customers-count'],

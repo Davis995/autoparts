@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Increase contrast of commonly used gray and blue utility classes
+   so text and highlights are not too faint across screens/browsers. */
+.text-gray-400 {
+  color: #6b7280; /* similar to Tailwind gray-500 */
+}
+
+.text-gray-500 {
+  color: #4b5563; /* similar to Tailwind gray-600 */
+}
+
+.bg-blue-50 {
+  background-color: #bfdbfe; /* similar to Tailwind blue-200 */
+}

@@ -194,7 +194,7 @@ create table if not exists public.orders (
   total_amount numeric(10,2) not null default 0,
   payment_method text not null default 'COD',
   status text not null default 'PENDING'
-    check (status in ('PENDING', 'CASH_ON_DELIVERY', 'PAID', 'OUT_FOR_DELIVERY', 'DELIVERED')),
+    check (status in ('PENDING', 'CASH_ON_DELIVERY', 'PAID', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED')),
 
   -- legacy fields kept for compatibility
   total numeric(10,2) not null default 0,

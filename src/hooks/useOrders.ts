@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabaseClient } from '@/lib/supabase'
 
 interface UserProfile {
   id: string
@@ -105,6 +107,51 @@ interface UseOrdersOptions {
 }
 
 export function useOrders(options?: UseOrdersOptions) {
+  const queryClient = useQueryClient()
+
+  // Optional Supabase realtime subscription so admin/users get live updates
+  useEffect(() => {
+    if (!options?.refetchIntervalMs && !options?.scope) {
+      // no special options provided; still allow realtime when explicitly enabled later
+    }
+  }, [options?.refetchIntervalMs, options?.scope])
+
+  // Subscribe to order INSERT/UPDATE events when requested
+  useEffect(() => {
+    // We enable realtime only when explicitly asked via enableRealtime flag
+    // to avoid unnecessary websocket usage for all views.
+    // @ts-expect-error - allow extra option without changing public type too much
+    const enableRealtime: boolean | undefined = options?.enableRealtime
+    if (!enableRealtime) return
+    if (typeof window === 'undefined') return
+
+    const channel = supabaseClient
+      .channel('orders-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'orders',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['orders'] })
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+      }, (payload) => {
+        const oldStatus = (payload as any).old?.status
+        const newStatus = (payload as any).new?.status
+        if (oldStatus !== newStatus) {
+          queryClient.invalidateQueries({ queryKey: ['orders'] })
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabaseClient.removeChannel(channel)
+    }
+  }, [queryClient, options])
+
   return useQuery({
     queryKey: ['orders', options?.scope ?? 'all'],
     queryFn: async (): Promise<OrderWithDetails[]> => {
@@ -183,6 +230,47 @@ export function useUpdateOrder() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       queryClient.invalidateQueries({ queryKey: ['order', variables.id] })
+    },
+  })
+}
+
+export function useCancelOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+
+      if (typeof window !== 'undefined') {
+        const sessionData = localStorage.getItem('auth_session')
+        if (!sessionData) {
+          throw new Error('You must be logged in to cancel an order')
+        }
+        const token = JSON.parse(sessionData).token
+        if (!token) {
+          throw new Error('You must be logged in to cancel an order')
+        }
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
+      const response = await fetch(`/api/orders/${id}/cancel`, {
+        method: 'POST',
+        headers,
+      })
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}))
+        throw new Error(errorBody?.error ?? 'Failed to cancel order')
+      }
+
+      return response.json()
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', 'me'] })
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['order', (variables as any).id] })
     },
   })
 }

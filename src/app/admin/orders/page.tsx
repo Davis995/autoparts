@@ -42,7 +42,12 @@ import { formatPrice } from '@/lib/currency';
 import { useOrders, useUpdateOrder, OrderWithDetails } from '@/hooks/useOrders';
 
 export default function AdminOrders() {
-  const { data: orders = [], isLoading, error } = useOrders({ scope: 'all', refetchIntervalMs: 1000 });
+  const { data: orders = [], isLoading, error } = useOrders({
+    scope: 'all',
+    // Use Supabase realtime (configured in useOrders) instead of tight polling
+    // @ts-expect-error - enableRealtime is an internal extension flag
+    enableRealtime: true,
+  });
   const updateOrder = useUpdateOrder();
   
   const [opened, setOpened] = useState(false);
@@ -115,6 +120,7 @@ export default function AdminOrders() {
     { value: 'PAID', label: 'Paid' },
     { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
     { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'CANCELLED', label: 'Cancelled' },
   ];
 
   const getCustomerName = (order: OrderWithDetails) => {
@@ -131,6 +137,7 @@ export default function AdminOrders() {
       case 'PAID': return 'green';
       case 'OUT_FOR_DELIVERY': return 'blue';
       case 'DELIVERED': return 'green';
+      case 'CANCELLED': return 'red';
       default: return 'gray';
     }
   };
@@ -142,6 +149,7 @@ export default function AdminOrders() {
       case 'PAID': return <IconCircleCheck size={14} />;
       case 'OUT_FOR_DELIVERY': return <IconTruck size={14} />;
       case 'DELIVERED': return <IconCircleCheck size={14} />;
+      case 'CANCELLED': return <IconX size={14} />;
       default: return null;
     }
   };
@@ -183,6 +191,7 @@ export default function AdminOrders() {
       cod: orders.filter(o => o.status === 'CASH_ON_DELIVERY').length,
       outForDelivery: orders.filter(o => o.status === 'OUT_FOR_DELIVERY').length,
       delivered: orders.filter(o => o.status === 'DELIVERED').length,
+      cancelled: orders.filter(o => o.status === 'CANCELLED').length,
     };
   }, [orders]);
 

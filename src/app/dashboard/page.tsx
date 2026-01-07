@@ -5,13 +5,19 @@ import { Package, User, LogOut } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { formatPrice } from '@/lib/currency';
-import { useOrders } from '@/hooks/useOrders';
+import { useOrders, useCancelOrder } from '@/hooks/useOrders';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'profile'>('orders');
-  const { data: orders = [], isLoading } = useOrders({ scope: 'me', refetchIntervalMs: 10000 });
+  const { data: orders = [], isLoading } = useOrders({
+    scope: 'me',
+    // Use Supabase realtime to keep tracking status live
+    // @ts-expect-error - internal flag on useOrders
+    enableRealtime: true,
+  });
+  const cancelOrder = useCancelOrder();
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -28,6 +34,7 @@ export default function DashboardPage() {
       case 'OUT_FOR_DELIVERY': return 'bg-blue-100 text-blue-800';
       case 'PAID': return 'bg-emerald-100 text-emerald-800';
       case 'CASH_ON_DELIVERY': return 'bg-orange-100 text-orange-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
       case 'PENDING': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -39,6 +46,7 @@ export default function DashboardPage() {
       case 'OUT_FOR_DELIVERY': return 'Out for Delivery';
       case 'PAID': return 'Paid';
       case 'CASH_ON_DELIVERY': return 'Cash on Delivery';
+      case 'CANCELLED': return 'Cancelled';
       case 'PENDING': return 'Pending';
       default: return status;
     }
@@ -52,8 +60,8 @@ export default function DashboardPage() {
     return idx === -1 ? 0 : idx;
   };
 
-  const activeOrders = orders.filter((order) => order.status !== 'DELIVERED');
-  const deliveredOrders = orders.filter((order) => order.status === 'DELIVERED');
+  const activeOrders = orders.filter((order) => !['DELIVERED', 'CANCELLED'].includes(order.status));
+  const deliveredOrders = orders.filter((order) => ['DELIVERED', 'CANCELLED'].includes(order.status));
 
   return (
     <ProtectedRoute>
@@ -149,64 +157,69 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            {/* Mobile progress bar */}
-                            <div className="mt-3 mb-4 sm:hidden">
-                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div
-                                  className="h-2 rounded-full bg-blue-500"
-                                  style={{ width: `${(currentStep / Math.max(1, STATUS_FLOW.length - 1)) * 100}%` }}
-                                />
-                              </div>
-                              <div className="mt-1 flex justify-between text-[10px] text-gray-600">
-                                <span>{getStatusText(STATUS_FLOW[0])}</span>
-                                <span>{getStatusText(order.status)}</span>
-                                <span>{getStatusText(STATUS_FLOW[STATUS_FLOW.length - 1])}</span>
-                              </div>
-                            </div>
+                            {/* Show progress flow only for non-cancelled orders */}
+                            {order.status !== 'CANCELLED' && (
+                              <>
+                                {/* Mobile progress bar */}
+                                <div className="mt-3 mb-4 sm:hidden">
+                                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                    <div
+                                      className="h-2 rounded-full bg-blue-500"
+                                      style={{ width: `${(currentStep / Math.max(1, STATUS_FLOW.length - 1)) * 100}%` }}
+                                    />
+                                  </div>
+                                  <div className="mt-1 flex justify-between text-[10px] text-gray-600">
+                                    <span>{getStatusText(STATUS_FLOW[0])}</span>
+                                    <span>{getStatusText(order.status)}</span>
+                                    <span>{getStatusText(STATUS_FLOW[STATUS_FLOW.length - 1])}</span>
+                                  </div>
+                                </div>
 
-                            {/* Status stepper - shown on tablets/desktop */}
-                            <div className="mt-3 mb-4 overflow-x-auto hidden sm:block">
-                              <div className="flex items-center gap-3 px-1">
-                                {STATUS_FLOW.map((step, index) => {
-                                  const isCompleted = index < currentStep;
-                                  const isCurrent = index === currentStep;
-                                  return (
-                                    <div key={step} className="flex-1 flex flex-col items-center text-center">
-                                      <div className="flex items-center w-full">
-                                        {index > 0 && (
-                                          <div
-                                            className={`h-0.5 flex-1 ${
-                                              index <= currentStep ? 'bg-blue-500' : 'bg-gray-200'
-                                            }`}
-                                          />
-                                        )}
-                                        <div
-                                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border ${
-                                            isCompleted
-                                              ? 'bg-green-500 text-white border-green-500'
-                                              : isCurrent
-                                                ? 'bg-blue-500 text-white border-blue-500'
-                                                : 'bg-gray-100 text-gray-500 border-gray-300'
-                                          }`}
-                                        >
-                                          {index + 1}
+                                {/* Status stepper - shown on tablets/desktop */}
+                                <div className="mt-3 mb-4 overflow-x-auto hidden sm:block">
+                                  <div className="flex items-center gap-3 px-1">
+                                    {STATUS_FLOW.map((step, index) => {
+                                      const isCompleted = index < currentStep;
+                                      const isCurrent = index === currentStep;
+                                      return (
+                                        <div key={step} className="flex-1 flex flex-col items-center text-center">
+                                          <div className="flex items-center w-full">
+                                            {index > 0 && (
+                                              <div
+                                                className={`h-0.5 flex-1 ${
+                                                  index <= currentStep ? 'bg-blue-500' : 'bg-gray-200'
+                                                }`}
+                                              />
+                                            )}
+                                            <div
+                                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border ${
+                                                isCompleted
+                                                  ? 'bg-green-500 text-white border-green-500'
+                                                  : isCurrent
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-gray-100 text-gray-500 border-gray-300'
+                                              }`}
+                                            >
+                                              {index + 1}
+                                            </div>
+                                            {index < STATUS_FLOW.length - 1 && (
+                                              <div
+                                                className={`h-0.5 flex-1 ${
+                                                  index < currentStep ? 'bg-blue-500' : 'bg-gray-200'
+                                                }`}
+                                              />
+                                            )}
+                                          </div>
+                                          <p className="mt-1 text-[10px] sm:text-xs text-gray-600 whitespace-nowrap">
+                                            {getStatusText(step)}
+                                          </p>
                                         </div>
-                                        {index < STATUS_FLOW.length - 1 && (
-                                          <div
-                                            className={`h-0.5 flex-1 ${
-                                              index < currentStep ? 'bg-blue-500' : 'bg-gray-200'
-                                            }`}
-                                          />
-                                        )}
-                                      </div>
-                                      <p className="mt-1 text-[10px] sm:text-xs text-gray-600 whitespace-nowrap">
-                                        {getStatusText(step)}
-                                      </p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </>
+                            )}
 
                             <div className="space-y-2">
                               {(order.orderItems || []).map((item) => (
@@ -218,6 +231,24 @@ export default function DashboardPage() {
                                 </div>
                               ))}
                             </div>
+
+                            {['PENDING', 'CASH_ON_DELIVERY'].includes(order.status) && (
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  type="button"
+                                  disabled={cancelOrder.isPending}
+                                  onClick={() => {
+                                    if (cancelOrder.isPending) return;
+                                    const confirmed = window.confirm('Are you sure you want to cancel this order?');
+                                    if (!confirmed) return;
+                                    cancelOrder.mutate({ id: order.id });
+                                  }}
+                                  className="px-4 py-2 text-sm font-medium rounded-lg border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {cancelOrder.isPending ? 'Cancelling...' : 'Cancel Order'}
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
